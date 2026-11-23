@@ -1,0 +1,97 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TravelMate AI</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--a:#ff6b6b;--b:#4ecdc4;--c:#ffd93d;--d:#6c5ce7;--ink:#1e1b4b}
+*{box-sizing:border-box}body{margin:0;font-family:Poppins,sans-serif;color:var(--ink);background:linear-gradient(135deg,#fff7ed,#ecfeff 50%,#f5f3ff);min-height:100vh}
+nav{display:flex;gap:12px;align-items:center;padding:14px 28px;background:linear-gradient(90deg,var(--d),var(--a),#ff9f43);color:#fff;position:sticky;top:0;z-index:999}
+nav b{font-size:22px;flex:1}button,.btn{border:0;border-radius:12px;padding:9px 16px;font:600 14px Poppins;cursor:pointer;background:linear-gradient(135deg,var(--d),var(--a));color:#fff;transition:.2s}button:hover{transform:translateY(-2px);box-shadow:0 6px 14px #0003}
+button.s{background:#fff;color:var(--d);border:2px solid var(--d)}button.g{background:#eee;color:#333}button.x{background:#ef4444}
+.hero{padding:70px 28px;text-align:center;color:#fff;background:linear-gradient(#0008,#0006),url("https://commons.wikimedia.org/wiki/Special:FilePath/Taj_Mahal_(Edited).jpeg?width=1600") center/cover,linear-gradient(135deg,#6c5ce7,#ff6b6b)}
+.hero h1{font-size:44px;margin:0 0 8px;font-weight:800}main{max-width:1150px;margin:auto;padding:24px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:18px}
+.card{background:#fff;border-radius:20px;box-shadow:0 8px 24px #6c5ce722;padding:18px;margin-bottom:16px}
+.dc{padding:0;overflow:hidden;cursor:pointer;transition:.3s}.dc:hover{transform:translateY(-6px) scale(1.02)}
+.im{height:170px;background:linear-gradient(135deg,var(--b),var(--d));background-size:cover;background-position:center;display:flex;align-items:flex-end;padding:12px;color:#fff;font-size:34px;text-shadow:0 2px 8px #000a}
+.dc .t{padding:12px 16px}.tag{display:inline-block;background:#ede9fe;color:var(--d);border-radius:99px;padding:2px 10px;font-size:12px;margin:2px}
+textarea,input,select{width:100%;padding:10px;border:2px solid #e5e7eb;border-radius:12px;font:14px Poppins;margin:4px 0}textarea:focus,input:focus{outline:0;border-color:var(--d)}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+.tabs button{background:#fff;color:var(--d);border:2px solid var(--d)}.tabs button.on{background:var(--d);color:#fff}
+.act{display:flex;gap:12px;padding:12px;border-left:6px solid var(--b);background:#f8fafc;border-radius:12px;margin:8px 0;align-items:center}
+.act:nth-child(3n+1){border-color:var(--a)}.act:nth-child(3n+2){border-color:var(--c)}.act .sm button{padding:4px 9px;font-size:12px;margin:2px}
+.bar{height:20px;border-radius:99px;background:linear-gradient(90deg,var(--b),var(--d));margin:3px 0}.warn{background:#fff7d6;border-left:5px solid var(--c);padding:8px 12px;border-radius:10px;margin:6px 0}
+.ok{color:#059669;font-weight:700}.bad{color:#dc2626;font-weight:700}#map{height:420px;border-radius:20px}
+#chat{position:fixed;right:20px;bottom:20px;z-index:1000}#cb{display:none;width:330px;height:420px;flex-direction:column;background:#fff;border-radius:20px;box-shadow:0 10px 40px #0004;overflow:hidden;margin-bottom:10px}
+#cm{flex:1;overflow:auto;padding:10px;font-size:13px}.m{padding:8px 12px;border-radius:14px;margin:5px 0;max-width:85%}.u{background:var(--d);color:#fff;margin-left:auto}.a{background:#f1f5f9}
+#modal{position:fixed;inset:0;background:#000a;display:none;place-items:center;z-index:2000}#modal>div{background:#fff;padding:28px;border-radius:24px;width:340px}
+.dh{height:120px;border-radius:16px;background-size:cover;background-position:center;margin-bottom:10px}
+</style></head><body>
+<nav><b>✈️ TravelMate AI</b><span id="who"></span><button class="s" onclick="show('home')">Explore</button><button class="s" id="tb" onclick="trips()">My Trips</button><button class="s" onclick="show('profile')">Profile</button><button id="lb" onclick="authOpen()">Login</button></nav>
+<div class="hero"><h1>Plan your dream trip with AI agents 🌏</h1><p>Supervisor + 6 specialist agents research, plan, optimise & adapt to weather — in seconds.</p></div>
+<main>
+<section id="home">
+ <div class="card"><h2>🗣️ Describe your trip</h2>
+ <textarea id="nl" rows="3">I want to plan a 6-day trip to Kerala from Vijayawada for three people. Our total budget is ₹35,000. We like beaches, nature, adventure activities, and local food. Please suggest an affordable itinerary.</textarea>
+ <details><summary><b>…or use the structured form</b></summary><div class="row" id="form">
+  <input id="f_origin" placeholder="From"><select id="f_dest"><option value="">Auto-pick destination</option></select><input id="f_start" type="date"><input id="f_end" type="date"><input id="f_n" type="number" placeholder="Travelers"><input id="f_b" type="number" placeholder="Total budget ₹"></div></details>
+ <p><button onclick="create()">✨ Plan my trip</button> <span id="load"></span></p><div id="qs"></div></div>
+ <h2>🔥 Famous destinations</h2><div class="grid" id="dests"></div></section>
+<section id="trips" hidden></section>
+<section id="trip" hidden></section>
+<section id="profile" hidden><div class="card"><h2>👤 Profile & travel preferences</h2><input id="p_name" placeholder="Name"><input id="p_pw" type="password" placeholder="New password (optional)">
+ <div class="row"><select id="p_style"><option>Solo</option><option>Friends</option><option>Family</option></select><select id="p_budget"><option>Budget</option><option>Balanced</option><option>Comfortable</option></select><select id="p_acc"><option>Hostel</option><option>Hotel</option><option>Resort</option></select><select id="p_food"><option>Any</option><option>Veg</option><option>Non-veg</option></select><select id="p_trans"><option>Train</option><option>Bus</option><option>Flight</option><option>Car</option></select><select id="p_pace"><option>balanced</option><option>relaxed</option><option>packed</option></select></div>
+ <p><b>Interests</b> <span id="p_int"></span></p><button onclick="saveProfile()">Save</button> <span id="favs"></span></div></section>
+</main>
+<div id="modal"><div><h2 id="mt">Welcome 👋</h2><input id="em" placeholder="Email"><input id="nm" placeholder="Name (register)"><input id="pw" type="password" placeholder="Password"><p><button onclick="auth('login')">Login</button> <button class="s" onclick="auth('register')">Register</button> <button class="g" onclick="modal.style.display='none'">✕</button></p><div id="ae" class="bad"></div></div></div>
+<div id="chat"><div id="cb"><div style="padding:10px;background:var(--d);color:#fff;font-weight:600">🤖 Travel Assistant</div><div id="cm"></div><div style="display:flex;padding:6px"><input id="ci" placeholder="Ask or edit: Replace adventure on Day 3 with relaxing" onkeydown="if(event.key=='Enter')sendChat()"><button onclick="sendChat()">➤</button></div></div><button onclick="cb.style.display=cb.style.display=='flex'?'none':'flex'" style="float:right;border-radius:99px;font-size:20px">💬</button></div>
+<script>
+const $=id=>document.getElementById(id);let T=localStorage.tm||"",TID=null,PL=null,DST={},FAV=[],INT=new Set(),MAP;
+const IN=["beach","nature","adventure","culture","shopping","food","relax"];
+async function api(p,m="GET",b){const r=await fetch("/api"+p,{method:m,headers:{"Content-Type":"application/json",Authorization:"Bearer "+T},body:b?JSON.stringify(b):undefined});const j=await r.json();if(!r.ok){if(r.status==401)authOpen();throw j.detail||"Error"}return j}
+const show=s=>{["home","trips","trip","profile"].forEach(x=>$(x).hidden=x!=s);if(s=="profile")loadProfile()};
+const authOpen=()=>$("modal").style.display="grid";const inr=n=>"₹"+Math.round(n).toLocaleString("en-IN");
+async function auth(k){try{const j=await api("/"+k,"POST",{email:em.value,password:pw.value,name:nm.value});T=j.token;localStorage.tm=T;modal.style.display="none";boot()}catch(e){ae.textContent=e}}
+const img=(u,e)=>`style="background-image:url('${u}')"`;
+async function boot(){DST=await api("/destinations");dests.innerHTML=Object.entries(DST).map(([k,d])=>`<div class="card dc" onclick="pick('${k}')"><div class="im" ${img(d.img)}>${d.emoji}</div><div class="t"><b>${d.name}</b> <span onclick="event.stopPropagation();fav('${k}')">${FAV.includes(k)?"❤️":"🤍"}</span><br><small>${d.blurb}</small><br>${d.tags.split(" ").map(t=>`<span class="tag">${t}</span>`).join("")}<br><small>📅 ${d.season} · 💎 ${d.hidden}</small></div></div>`).join("");
+ f_dest.innerHTML='<option value="">Auto-pick destination</option>'+Object.entries(DST).map(([k,d])=>`<option value="${k}">${d.name}</option>`).join("");
+ if(T)try{const m=await api("/me");who.textContent="Hi, "+m.name;lb.style.display="none";FAV=m.favs}catch{}}
+function pick(k){f_dest.value=k;nl.value=`Plan a 4-day trip to ${DST[k].name.split(",")[0]} from Vijayawada for 2 people with budget ₹30,000. We like ${DST[k].tags.split(" ").slice(0,3).join(", ")}.`;scrollTo({top:0,behavior:"smooth"})}
+async function fav(k){if(!T)return authOpen();FAV=await api("/favs/"+k,"POST");boot()}
+async function create(){if(!T)return authOpen();load.textContent="🤖 Agents are planning… ";const form={origin:f_origin.value,destination:f_dest.value,start:f_start.value,end:f_end.value,travelers:+f_n.value||null,budget:+f_b.value||null};
+ try{let j=await api("/trips","POST",{text:nl.value,form});if(j.questions){qs.innerHTML=`<div class="warn"><b>Follow-up questions</b><br>${j.questions.join("<br>")}<br><br><button class="s" onclick="forceGo()">Continue with defaults</button></div>`;load.textContent="";return}
+ qs.innerHTML="";open_(j.id,j.plan)}catch(e){alert(e)}load.textContent=""}
+async function forceGo(){const j=await api("/trips","POST",{text:nl.value,form:{force:true,origin:f_origin.value,destination:f_dest.value,travelers:+f_n.value||null,budget:+f_b.value||null}});qs.innerHTML="";open_(j.id,j.plan)}
+async function trips(){if(!T)return authOpen();const l=await api("/trips");show("trips");$("trips").innerHTML="<h2>🧳 My trips</h2><div class='grid'>"+l.map(t=>`<div class="card dc" onclick="openId(${t.id})"><div class="im" ${img(t.img)}></div><div class="t"><b>${t.dest}</b><br>${t.days} days · ${t.created.slice(0,10)}</div></div>`).join("")+"</div>"}
+const openId=async id=>open_(id,await api("/trips/"+id));
+function open_(id,p){TID=id;PL=p;show("trip");render("itin")}
+function render(tab){const p=PL,r=p.req;const hdr=`<div class="card"><div class="dh" ${img(p.dest.img)}></div><h2>${p.dest.emoji} ${p.dest.name} · ${r.days} days · ${r.travelers} travelers</h2><small>${r.start} → ${r.end} · from ${r.origin} · budget ${inr(r.budget)}</small><p>${p.dest.why||""} <i>💎 Hidden gem: ${p.dest.hidden}</i></p>${p.issues.map(i=>`<div class="warn">⚠️ ${i}</div>`).join("")}</div>
+<div class="card"><input id="nle" placeholder="AI edit: Replace the adventure activity on Day 3 with a relaxing activity"><button onclick="nlEdit()">Apply</button></div>
+<div class="tabs">${[["itin","📅 Itinerary"],["bud","💰 Budget"],["wx","⛅ Weather"],["trn","🚆 Transport & Stay"],["map","🗺️ Map"],["ver","🕘 Versions"]].map(([k,l])=>`<button class="${k==tab?"on":""}" onclick="render('${k}')">${l}</button>`).join("")}</div><div id="tc"></div>`;
+ $("trip").innerHTML=hdr;const c=$("tc");
+ if(tab=="itin")c.innerHTML=p.itinerary.map((d,di)=>`<div class="card"><h3>Day ${d.day} · ${d.date} ${d.weather?`<small>${d.weather.bad?"🌧️":"☀️"} ${d.weather.rain}% rain</small>`:""}</h3>
+  <button class="s" onclick="regDay(${d.day})">🔄 Regenerate day</button> <button class="s" onclick="addAct(${d.day})">➕ Add</button>
+  ${d.activities.map((a,i)=>`<div class="act"><div style="min-width:60px"><b>${a.time}</b><br><small>${a.dur}h</small></div><div style="flex:1"><b>${a.name}</b> ${a.note?`<span class="tag">${a.note}</span>`:""}<br><small>${a.desc}</small><br><small>💸 ${inr(a.cost)}/person ${a.travel_km?`· 🚗 ${a.travel_km} km (~${a.travel_min} min)`:""}</small></div>
+  <div class="sm"><button onclick="upd('mv',${d.day},${i},-1)">↑</button><button onclick="upd('mv',${d.day},${i},1)">↓</button><button onclick="editAct(${d.day},${i})">✏️</button><button onclick="regAct(${d.day},${i})">🔄</button><button class="x" onclick="delAct(${d.day},${i})">🗑</button></div></div>`).join("")}</div>`).join("");
+ if(tab=="bud"){const S=p.budget.scenarios,mx=Math.max(...Object.values(S).map(s=>s.total));c.innerHTML=`<div class="card"><h3>⭐ Recommended: ${p.budget.recommended}</h3>${p.budget.tips.map(t=>`<div class="warn">💡 ${t}</div>`).join("")}<small>All figures are estimates.</small></div><div class="grid">${Object.entries(S).map(([n,s])=>`<div class="card"><h3>${n}</h3><div class="${s.within?"ok":"bad"}">${inr(s.total)} (${inr(s.per_person)}/person) ${s.within?"✅ within budget":"⚠️ over budget"}</div><small>🚆 ${s.mode}</small>${Object.entries(s.breakdown).map(([k,v])=>`<div><small>${k} — ${inr(v)}</small><div class="bar" style="width:${v/mx*100*3}%;max-width:100%"></div></div>`).join("")}</div>`).join("")}</div>
+  <div class="card"><h3>🎛️ What-if simulator</h3><input id="wi" type="number" value="${r.budget}"><button onclick="whatif()">Simulate</button><div id="wr"></div></div>`}
+ if(tab=="wx")c.innerHTML=`<div class="grid">${p.weather.map(w=>`<div class="card" style="background:${w.bad?"#e0f2fe":"#fef9c3"}"><h3>${w.bad?"🌧️":"☀️"} ${w.date}</h3>${w.tmax?w.tmax+"°C<br>":""}${w.rain}% rain<br><small>${w.note}<br><i>${w.source}</i></small></div>`).join("")}</div>`;
+ if(tab=="trn"){const t=p.transport;c.innerHTML=`<div class="card"><h3>🚆 ~${t.km} km route</h3><div class="warn">${t.note}</div>${t.modes.map(m=>`<div class="act"><b>${m.mode}</b>&nbsp;~${m.hours}h · ≈${inr(m.pp_round_trip)} pp round trip <span class="tag">estimate</span></div>`).join("")}</div><div class="card"><h3>🏨 Stays</h3><div class="warn">${p.stay.note}</div>${p.stay.categories.map(m=>`<div class="act"><b>${m.tier}</b>&nbsp;${m.type} · ≈${inr(m.per_room)}/room/night <span class="tag">estimate</span></div>`).join("")}</div>`}
+ if(tab=="map"){c.innerHTML='<div id="map"></div>';setTimeout(()=>{if(MAP)MAP.remove();MAP=L.map("map").setView([p.dest.lat,p.dest.lon],8);L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:"© OpenStreetMap"}).addTo(MAP);const pts=[];p.itinerary.forEach(d=>d.activities.forEach(a=>{pts.push([a.lat,a.lon]);L.marker([a.lat,a.lon]).addTo(MAP).bindPopup(`<b>Day ${d.day}: ${a.name}</b><br>${a.desc}`)}));if(pts.length){L.polyline(pts,{color:"#6c5ce7"}).addTo(MAP);MAP.fitBounds(pts)}},50)}
+ if(tab=="ver")api(`/trips/${TID}/versions`).then(v=>c.innerHTML=`<div class="card">${v.map(x=>`<div class="act"><div style="flex:1"><b>v${x.id}</b> ${x.note}<br><small>${x.created}</small></div><button class="s" onclick="restore(${x.id})">Restore</button></div>`).join("")}</div>`)}
+async function mut(path,m,b){const j=await api(`/trips/${TID}${path}`,m,b);PL=j.plan;render(tabNow())}
+const tabNow=()=>document.querySelector(".tabs .on")?.getAttribute("onclick").match(/'(\w+)'/)[1]||"itin";
+const regDay=d=>{const s=prompt("Style? (relax / adventure / culture / food / beach — blank = auto)")||null;mut(`/regen-day/${d}`,"POST",{style:s})};
+const regAct=(d,i)=>{const s=prompt("Style? (blank = auto)")||null;mut(`/regen-activity/${d}/${i}`,"POST",{style:s})};
+const delAct=(d,i)=>mut(`/activity/${d}/${i}`,"DELETE");
+const addAct=d=>{const n=prompt("Activity name");if(n)mut("/activity","POST",{day:d,name:n,dur:+prompt("Duration (h)","1"),cost:+prompt("Cost per person ₹","0"),time:prompt("Time","10:00")})};
+const editAct=(d,i)=>{const a=PL.itinerary[d-1].activities[i];mut(`/activity/${d}/${i}`,"PUT",{name:prompt("Name",a.name),cost:+prompt("Cost ₹",a.cost),time:prompt("Time",a.time),dur:+prompt("Hours",a.dur)})};
+const upd=(k,d,i,dir)=>{const ti=i+dir;if(ti<0||ti>=PL.itinerary[d-1].activities.length)return;mut("/move","POST",{day:d,idx:i,to_day:d,to_idx:ti})};
+async function nlEdit(){const j=await api(`/trips/${TID}/nl-edit`,"POST",{text:nle.value});PL=j.plan;render("itin");alert(j.msg)}
+async function whatif(){const j=await api(`/trips/${TID}/whatif`,"POST",{budget:+wi.value});wr.innerHTML=Object.entries(j).map(([k,v])=>`<p>${k}: <span class="${v.within?"ok":"bad"}">${v.within?"✅ fits":"❌ over by "+inr(v.gap)}</span></p>`).join("")}
+async function restore(v){const j=await api(`/trips/${TID}/restore/${v}`,"POST");PL=j.plan;render("itin")}
+async function loadProfile(){if(!T)return authOpen();const m=await api("/me"),p=m.prefs;p_name.value=m.name;["style","budget","acc","food","trans","pace"].forEach(k=>{if(p[k])$("p_"+k).value=p[k]});INT=new Set(p.interests||[]);const draw=()=>p_int.innerHTML=IN.map(i=>`<span class="tag" style="cursor:pointer;${INT.has(i)?"background:var(--d);color:#fff":""}" onclick="INT.has('${i}')?INT.delete('${i}'):INT.add('${i}');window.dI()">${i}</span>`).join("");window.dI=draw;draw();favs.innerHTML="❤️ Favorites: "+(m.favs.map(k=>DST[k]?.name).join(", ")||"none")}
+async function saveProfile(){const prefs={interests:[...INT]};["style","budget","acc","food","trans","pace"].forEach(k=>prefs[k]=$("p_"+k).value);await api("/me","PUT",{name:p_name.value,prefs,password:p_pw.value||undefined});alert("Saved ✔")}
+async function sendChat(){const t=ci.value;if(!t)return;if(!T)return authOpen();ci.value="";cm.innerHTML+=`<div class="m u">${t}</div>`;try{const j=await api("/chat","POST",{message:t,trip_id:TID});cm.innerHTML+=`<div class="m a">${j.reply}</div>`;if(j.plan){PL=j.plan;render("itin")}}catch(e){cm.innerHTML+=`<div class="m a">${e}</div>`}cm.scrollTop=1e9}
+boot();
+</script></body></html>
